@@ -1,12 +1,13 @@
 package cc.blynk.utils;
 
-import org.apache.commons.validator.routines.EmailValidator;
+import cc.blynk.server.application.handlers.main.auth.BlynkEmailValidator;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * User: ddumanskiy
@@ -38,7 +39,7 @@ public class EMailValidationTest {
         };
 
         for (String email : mailList) {
-            assertTrue(email, EmailValidator.getInstance().isValid(email));
+            assertFalse(email, BlynkEmailValidator.isNotValidEmail(email));
         }
     }
 
@@ -54,7 +55,7 @@ public class EMailValidationTest {
                 //        || email.endsWith(".hshs") || email.endsWith(".aa") || email.endsWith(".cim")) {
                 //    continue;
                 //}
-                assertTrue(email, EmailValidator.getInstance().isValid(email));
+                assertFalse(email, BlynkEmailValidator.isNotValidEmail(email));
             }
         }
     }
@@ -77,11 +78,12 @@ public class EMailValidationTest {
                 "mmmm..2002@gmail.com",
                 "mmmm.@gmail.com",
                 "mmmm@mmmm@gmail.com",
+                "ji?pui@gmail.com",
                 "bla@bla"
         };
 
         for (String email : mailList) {
-            assertFalse(email, EmailValidator.getInstance().isValid(email));
+            assertTrue(email, BlynkEmailValidator.isNotValidEmail(email));
         }
     }
 

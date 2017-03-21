@@ -1,9 +1,7 @@
 package cc.blynk.server.api.http;
 
-import cc.blynk.core.http.rest.HandlerRegistry;
 import cc.blynk.server.Holder;
 import cc.blynk.server.api.http.handlers.HttpAndWebSocketUnificatorHandler;
-import cc.blynk.server.api.http.logic.HttpAPILogic;
 import cc.blynk.server.core.BaseServer;
 import cc.blynk.utils.SslUtil;
 import io.netty.channel.ChannelInitializer;
@@ -22,10 +20,10 @@ public class HttpsAPIServer extends BaseServer {
 
     private final ChannelInitializer<SocketChannel> channelInitializer;
 
-    public HttpsAPIServer(Holder holder) {
-        super(holder.props.getIntProperty("https.port"), holder.transportTypeHolder);
+    public HttpsAPIServer(Holder holder, boolean isUnpacked) {
+        super(holder.props.getProperty("listen.address"), holder.props.getIntProperty("https.port"), holder.transportTypeHolder);
 
-        HandlerRegistry.register(new HttpAPILogic(holder));
+        String adminRootPath = holder.props.getProperty("admin.rootPath", "/admin");
 
         final SslContext sslCtx = SslUtil.initSslContext(
                 holder.props.getProperty("https.cert", holder.props.getProperty("server.ssl.cert")),
@@ -33,7 +31,8 @@ public class HttpsAPIServer extends BaseServer {
                 holder.props.getProperty("https.key.pass", holder.props.getProperty("server.ssl.key.pass")),
                 SslUtil.fetchSslProvider(holder.props));
 
-        final HttpAndWebSocketUnificatorHandler httpAndWebSocketUnificatorHandler = new HttpAndWebSocketUnificatorHandler(holder, port);
+        final HttpAndWebSocketUnificatorHandler httpAndWebSocketUnificatorHandler =
+                new HttpAndWebSocketUnificatorHandler(holder, port, adminRootPath, isUnpacked);
 
         channelInitializer = new ChannelInitializer<SocketChannel>() {
             @Override
@@ -54,12 +53,12 @@ public class HttpsAPIServer extends BaseServer {
 
     @Override
     protected String getServerName() {
-        return "HTTPS API and WebSockets";
+        return "HTTPS API, WebSockets and Admin page";
     }
 
     @Override
     public void close() {
-        System.out.println("Shutting down HTTPS API and WebSockets server...");
+        System.out.println("Shutting down HTTPS API, WebSockets and Admin server...");
         super.close();
     }
 

@@ -141,6 +141,50 @@ public class MainWorkflowTest extends IntegrationBase {
     }
 
     @Test
+    public void doNotAllowUsersWithQuestionMark() throws Exception {
+        TestAppClient appClient = new TestAppClient("localhost", tcpAppPort, properties);
+
+        appClient.start();
+
+        appClient.send("register te?st@test.com 1");
+        verify(appClient.responseMock, timeout(500)).channelRead(any(), eq(new ResponseMessage(1, ILLEGAL_COMMAND)));
+    }
+
+    @Test
+    public void createDashWithDevices() throws Exception {
+        TestAppClient appClient = new TestAppClient("localhost", tcpAppPort, properties);
+
+        appClient.start();
+
+        appClient.send("register test@test.com 1");
+        verify(appClient.responseMock, timeout(500)).channelRead(any(), eq(new ResponseMessage(1, OK)));
+
+        appClient.send("login test@test.com 1 Android RC13");
+        verify(appClient.responseMock, timeout(500)).channelRead(any(), eq(new ResponseMessage(2, OK)));
+
+        DashBoard dash = new DashBoard();
+        dash.id = 1;
+        dash.name = "AAAa";
+        Device device = new Device();
+        device.id = 0;
+        device.name = "123";
+        dash.devices = new Device[] {device};
+
+        appClient.send("createDash no_token\0" + dash.toString());
+        verify(appClient.responseMock, timeout(500)).channelRead(any(), eq(new ResponseMessage(3, OK)));
+
+        appClient.send("getDevices 1");
+        String response = appClient.getBody(4);
+
+        Device[] devices = JsonParser.mapper.readValue(response, Device[].class);
+        assertNotNull(devices);
+        assertEquals(1, devices.length);
+        assertEquals(0, devices[0].id);
+        assertEquals("123", devices[0].name);
+        assertNull(devices[0].token);
+    }
+
+    @Test
     public void testConnectAppAndHardware() throws Exception {
         // we just test that app and hardware can actually connect
     }
@@ -585,8 +629,8 @@ public class MainWorkflowTest extends IntegrationBase {
                 "Documentation -> http://docs.blynk.cc/\n" +
                 "Sketch generator -> http://examples.blynk.cc/\n" +
                 "\n" +
-                "Latest Blynk library -> https://github.com/blynkkk/blynk-library/releases/download/v0.4.4/Blynk_Release_v0.4.4.zip\n" +
-                "Latest Blynk server -> https://github.com/blynkkk/blynk-server/releases/download/v0.23.0/server-0.23.0.jar\n" +
+                "Latest Blynk library -> https://github.com/blynkkk/blynk-library/releases/download/v0.4.6/Blynk_Release_v0.4.6.zip\n" +
+                "Latest Blynk server -> https://github.com/blynkkk/blynk-server/releases/download/v0.23.2/server-0.23.2.jar\n" +
                 "-\n" +
                 "http://www.blynk.cc\n" +
                 "twitter.com/blynk_app\n" +
@@ -627,8 +671,8 @@ public class MainWorkflowTest extends IntegrationBase {
                 "Documentation -> http://docs.blynk.cc/\n" +
                 "Sketch generator -> http://examples.blynk.cc/\n" +
                 "\n" +
-                "Latest Blynk library -> https://github.com/blynkkk/blynk-library/releases/download/v0.4.4/Blynk_Release_v0.4.4.zip\n" +
-                "Latest Blynk server -> https://github.com/blynkkk/blynk-server/releases/download/v0.23.0/server-0.23.0.jar\n" +
+                "Latest Blynk library -> https://github.com/blynkkk/blynk-library/releases/download/v0.4.6/Blynk_Release_v0.4.6.zip\n" +
+                "Latest Blynk server -> https://github.com/blynkkk/blynk-server/releases/download/v0.23.2/server-0.23.2.jar\n" +
                 "-\n" +
                 "http://www.blynk.cc\n" +
                 "twitter.com/blynk_app\n" +

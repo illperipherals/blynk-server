@@ -4,6 +4,7 @@ import cc.blynk.server.core.dao.TokenManager;
 import cc.blynk.server.core.model.AppName;
 import cc.blynk.server.core.model.DashBoard;
 import cc.blynk.server.core.model.auth.User;
+import cc.blynk.server.core.model.enums.Theme;
 import cc.blynk.utils.JsonParser;
 import cc.blynk.utils.SHA256Util;
 
@@ -29,7 +30,7 @@ public class ProjectTokenGenerator {
         String username = "dmitriy@blynk.cc";
         String pass = "b";
         String appName = AppName.BLYNK;
-        User user = new User(username, SHA256Util.makeHash(pass, username), appName, "local", false);
+        User user = new User(username, SHA256Util.makeHash(pass, username), appName, "local", false, false);
         user.purchaseEnergy(98000);
 
         int count = 300;
@@ -39,7 +40,7 @@ public class ProjectTokenGenerator {
             DashBoard dash = new DashBoard();
             dash.id = i;
             dash.boardType = "Generic Board";
-            dash.theme = "Blynk";
+            dash.theme = Theme.Blynk;
             dash.isActive = true;
             user.profile.dashBoards[i - 1] = dash;
         }

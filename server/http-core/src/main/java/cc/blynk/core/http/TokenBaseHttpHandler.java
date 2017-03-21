@@ -1,9 +1,6 @@
-package cc.blynk.server.api.http.handlers;
+package cc.blynk.core.http;
 
-import cc.blynk.core.http.BaseHttpHandler;
-import cc.blynk.core.http.Response;
-import cc.blynk.core.http.rest.HandlerHolder;
-import cc.blynk.core.http.rest.HandlerRegistry;
+import cc.blynk.core.http.rest.Handler;
 import cc.blynk.core.http.rest.URIDecoder;
 import cc.blynk.server.core.dao.SessionDao;
 import cc.blynk.server.core.dao.TokenManager;
@@ -18,19 +15,19 @@ import io.netty.handler.codec.http.FullHttpResponse;
 /**
  * The Blynk Project.
  * Created by Dmitriy Dumanskiy.
- * Created on 01.01.16.
+ * Created on 24.12.15.
  */
-public class HttpHandler extends BaseHttpHandler {
+public abstract class TokenBaseHttpHandler extends BaseHttpHandler {
 
-    public HttpHandler(TokenManager tokenManager, SessionDao sessionDao, GlobalStats globalStats) {
-        super(tokenManager, sessionDao, globalStats);
+    public TokenBaseHttpHandler(TokenManager tokenManager, SessionDao sessionDao, GlobalStats globalStats, String rootPath) {
+        super(tokenManager, sessionDao, globalStats, rootPath);
     }
 
     @Override
-    public void finishHttp(ChannelHandlerContext ctx, URIDecoder uriDecoder, HandlerHolder handlerHolder, Object[] params) {
+    public void finishHttp(ChannelHandlerContext ctx, URIDecoder uriDecoder, Handler handler, Object[] params) {
         String tokenPathParam = uriDecoder.pathData.get("token");
         if (tokenPathParam == null) {
-            ctx.writeAndFlush(HandlerRegistry.invoke(handlerHolder, params), ctx.voidPromise());
+            ctx.writeAndFlush(Response.badRequest("No token provided."));
             return;
         }
 
@@ -45,9 +42,9 @@ public class HttpHandler extends BaseHttpHandler {
         Session session = sessionDao.getOrCreateSessionByUser(new UserKey(tokenValue.user), ctx.channel().eventLoop());
         if (session.initialEventLoop != ctx.channel().eventLoop()) {
             log.debug("Re registering http channel. {}", ctx.channel());
-            reRegisterChannel(ctx, session, channelFuture -> completeLogin(channelFuture.channel(), HandlerRegistry.invoke(handlerHolder, params)));
+            reRegisterChannel(ctx, session, channelFuture -> completeLogin(channelFuture.channel(), handler.invoke(params)));
         } else {
-            completeLogin(ctx.channel(), HandlerRegistry.invoke(handlerHolder, params));
+            completeLogin(ctx.channel(), handler.invoke(params));
         }
     }
 

@@ -1,11 +1,16 @@
 package cc.blynk.server.notifications.mail;
 
+import net.glxn.qrgen.core.image.ImageType;
+import net.glxn.qrgen.javase.QRCode;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 /**
@@ -24,6 +29,31 @@ public class MailWrapperTest {
 
     @Test
     @Ignore
+    public void sendMailWithAttachments() throws Exception {
+        Properties properties = new Properties();
+        try (InputStream classPath = MailWrapperTest.class.getResourceAsStream("/mail.properties")) {
+            if (classPath != null) {
+                properties.load(classPath);
+            }
+        }
+
+        QrHolder qrHolder = new QrHolder("123.jpg", QRCode.from("123").to(ImageType.JPG).stream().toByteArray());
+        QrHolder qrHolder2 = new QrHolder("124.jpg", QRCode.from("124").to(ImageType.JPG).stream().toByteArray());
+
+        String to = "doom369@gmail.com";
+        MailWrapper mailWrapper = new MailWrapper(properties);
+        mailWrapper.sendHtmlWithAttachment(to, "Hello", "Body!", new QrHolder[] {qrHolder, qrHolder2});
+    }
+
+    private static void generateQR(String text, Path outputFile) throws Exception {
+        try (OutputStream out = Files.newOutputStream(outputFile)) {
+            QRCode.from(text).to(ImageType.JPG).writeTo(out);
+        }
+    }
+
+
+    @Test
+    @Ignore
     public void sendMail() throws Exception {
         Properties properties = new Properties();
         try (InputStream classPath = MailWrapperTest.class.getResourceAsStream("/mail.properties")) {
@@ -39,7 +69,7 @@ public class MailWrapperTest {
 
     @Test
     @Ignore
-    public void sendMailWithAttachments() throws Exception {
+    public void sendMail2() throws Exception {
         Properties properties = new Properties();
         try (InputStream classPath = MailWrapperTest.class.getResourceAsStream("/mail.properties")) {
             if (classPath != null) {

@@ -15,25 +15,50 @@ If you need more information, please follow these links:
 
 ![Dashboard settings](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/dash_settings.png)
 ![Widgets Box](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/widgets_box.png)
-![Button edit](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/button_edit.png)
-![terminal edit](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/terminal_edit.png)
 ![Dashboard](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/dash.png)
 ![Dashboard2](https://github.com/blynkkk/blynk-server/blob/master/docs/overview/dash2.png)
 
-# Blynk server
-Blynk Server is an Open-Source [Netty](https://github.com/netty/netty) based Java server, responsible for forwarding messages between Blynk mobile application and various microcontroller boards and SBCs (i.e. Arduino, Raspberry Pi. etc).
+# Content 
+
+- [Download](https://github.com/blynkkk/blynk-server#blynk-server)
+- [Requirements](https://github.com/blynkkk/blynk-server#requirements)
+- [Quick Local Server setup](https://github.com/blynkkk/blynk-server#quick-local-server-setup)
+- [Quick local server setup on Raspberry PI](https://github.com/blynkkk/blynk-server#quick-local-server-setup-on-raspberry-pi)
+- [Enabling server auto restart on unix-like systems](https://github.com/blynkkk/blynk-server#enabling-server-auto-restart-on-unix-like-systems)
+- [Enabling server auto restart on Windows](https://github.com/blynkkk/blynk-server#enabling-server-auto-restart-on-windows)
+- [Update instruction for unix-like systems](https://github.com/blynkkk/blynk-server#update-instruction-for-unix-like-systems)
+- [Update instruction for Windows](https://github.com/blynkkk/blynk-server#update-instruction-for-windows)
+- [App and sketch changes for Local Server](https://github.com/blynkkk/blynk-server#app-and-sketch-changes)
+- [Advanced local server setup](https://github.com/blynkkk/blynk-server#advanced-local-server-setup)
+- [Administration UI](https://github.com/blynkkk/blynk-server#administration-ui)
+- [HTTP/S RESTful API](https://github.com/blynkkk/blynk-server#https-restful)
+- [Enabling mail on Local server](https://github.com/blynkkk/blynk-server#enabling-mail-on-local-server)
+- [Enabling sms on local server](https://github.com/blynkkk/blynk-server#enabling-sms-on-local-server)
+- [Enabling raw data storage](https://github.com/blynkkk/blynk-server#enabling-raw-data-storage)
+- [Generate Let's Encrypt SSL/TLS Certificates](https://github.com/blynkkk/blynk-server#generate-lets-encrypt-ssltls-certificates)
+- [Generate own SSL certificates](https://github.com/blynkkk/blynk-server#generate-own-ssl-certificates)
+- [Install java for Ubuntu](https://github.com/blynkkk/blynk-server#install-java-for-ubuntu)
+- [How Blynk Works?](https://github.com/blynkkk/blynk-server#how-blynk-works)
+- [Blynk Protocol](https://github.com/blynkkk/blynk-server#blynk-protocol)
+
+# GETTING STARTED
+
+## Blynk server
+Blynk Server is an Open-Source [Netty](https://github.com/netty/netty) based Java server, responsible for forwarding 
+messages between Blynk mobile application and various microcontroller boards and SBCs (i.e. Arduino, Raspberry Pi. etc).
+
 **Download latest server build [here](https://github.com/blynkkk/blynk-server/releases).**
 
 [![GitHub version](https://img.shields.io/github/release/blynkkk/blynk-server.svg)](https://github.com/blynkkk/blynk-server/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/blynkkk/blynk-server/total.svg)](https://github.com/blynkkk/blynk-server/releases/latest)
 [ ![Build Status](https://travis-ci.org/blynkkk/blynk-server.svg?branch=master)](https://travis-ci.org/blynkkk/blynk-server)
 
-# GETTING STARTED
-
 ## Requirements
-Java 8 required. (OpenJDK, Oracle). 
+- Java 8 required (OpenJDK, Oracle) 
+- Any OS that can run java 
+- At least 30 MB of RAM (could be less with tuning)
 
-Ubuntu installation instructions can be found [here](https://github.com/blynkkk/blynk-server#install-java-for-ubuntu).
+[Ubuntu java installation instruction](https://github.com/blynkkk/blynk-server#install-java-for-ubuntu).
 
 For Windows download Java [here](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) and install. 
 
@@ -46,7 +71,7 @@ For Windows download Java [here](http://www.oracle.com/technetwork/java/javase/d
 
 + Run the server on default 'hardware port 8442' and default 'application port 8443' (SSL port)
 
-        java -jar server-0.23.0.jar -dataFolder /path
+        java -jar server-0.23.2.jar -dataFolder /path
         
 That's it! 
 
@@ -71,11 +96,11 @@ That's it!
         
 + Download Blynk server jar file (or manually copy it to Raspberry Pi via ssh and scp command): 
    
-        wget "https://github.com/blynkkk/blynk-server/releases/download/v0.23.0/server-0.23.0.jar"
+        wget "https://github.com/blynkkk/blynk-server/releases/download/v0.23.2/server-0.23.2.jar"
 
 + Run the server on default 'hardware port 8442' and default 'application port 8443' (SSL port)
 
-        java -jar server-0.23.0.jar -dataFolder /home/pi/Blynk        
+        java -jar server-0.23.2.jar -dataFolder /home/pi/Blynk        
         
 That's it! 
 
@@ -88,7 +113,7 @@ That's it!
         
 + To enable server auto restart find /etc/init.d/rc.local file and add:
 
-        java -jar /home/pi/server-0.23.0.jar -dataFolder /home/pi/Blynk &
+        java -jar /home/pi/server-0.23.2.jar -dataFolder /home/pi/Blynk &
         
 + Or if the approach above doesn't work, execute 
        
@@ -96,7 +121,7 @@ That's it!
 
 add the following line
 
-        @reboot java -jar /home/pi/server-0.23.0.jar -dataFolder /home/pi/Blynk &
+        @reboot java -jar /home/pi/server-0.23.2.jar -dataFolder /home/pi/Blynk &
         
 save and exit.
 
@@ -108,7 +133,7 @@ save and exit.
 
 + Put in it one line: 
 
-        java -jar server-0.23.0.jar -dataFolder /home/pi/Blynk
+        java -jar server-0.23.2.jar -dataFolder /home/pi/Blynk
         
 + Put bat file to windows startup folder
 
@@ -125,7 +150,7 @@ Server should be always updated befor you update Blynk App. To update your serve
         
 + You should see something like that
  
-        username   10539  1.0 12.1 3325808 428948 pts/76 Sl   Jan22   9:11 java -jar server-0.23.0.jar   
+        username   10539  1.0 12.1 3325808 428948 pts/76 Sl   Jan22   9:11 java -jar server-0.23.2.jar   
         
 + Kill the old process
 
@@ -224,7 +249,7 @@ do the same with ```mail.properties``` via ```-mailConfig``` and ```sms.properti
  
 For example:
 
-    java -jar server-0.23.0.jar -dataFolder /home/pi/Blynk -serverConfig /home/pi/someFolder/server.properties
+    java -jar server-0.23.2.jar -dataFolder /home/pi/Blynk -serverConfig /home/pi/someFolder/server.properties
 
 Available server options:
 
@@ -252,7 +277,7 @@ Available server options:
         server.ssl.key.pass=pupkin123
                 
         
-+ Https and web sockets port
++ Https, web sockets, admin port
         
         https.port=9443
         
@@ -332,20 +357,19 @@ Available server options:
         enable.raw.data.store=true
         
         
-+ Administration UI https port
-        
-        administration.https.port=7443
-        
-        
-+ Url for opening admin page. Must start from "/". For "/admin" url path will look like that "https://127.0.0.1:7443/admin". 
++ Url for opening admin page. Must start from "/". For "/admin" url path will look like that "https://127.0.0.1:9443/admin". 
 
         admin.rootPath=/admin
         
         
 + Comma separated list of administrator IPs. Allow access to admin UI only for those IPs. You may set it for 0.0.0.0/0 to allow access for all. You may use CIDR notation. For instance, 192.168.0.53/24.
         
-        allowed.administrator.ips=127.0.0.1
+        allowed.administrator.ips=0.0.0.0/0
         
++ Default admin name and password. Will be created on initial server start
+        
+        admin.email=admin@blynk.cc
+        admin.pass=admin
 
 + Host for reset password redirect. By default current server IP is taken from "eth" network interface. Could be replaced with more friendly hostname. It is recommended to override this property with your server IP to avoid possible problems of host resolving.
         
@@ -360,19 +384,24 @@ Available server options:
 
 Blynk server provides administration panel where you can monitor your server. It is accessible at this URL:
 
-        https://your_ip:7443/admin
+        https://your_ip:9443/admin
         
 ![Administration UI](https://github.com/blynkkk/blynk-server/blob/master/docs/admin_panel.png)
-        
-You can change it with next options :
-        
-        admin.rootPath
-        allowed.administrator.ips
-        administration.https.port
+              
+**WARNING**
+Please change default admin password and name right after login to admin page. **THIS IS SECURITY MEASURE**.
         
 **WARNING**
-Default ```allowed.administrator.ips``` setting allows access only from ```localhost```. In other words, 
-administration is not available from any other computer except from the one you are running the server on.
+Default ```allowed.administrator.ips``` setting allows access for everyone. In other words, 
+administration page available from any other computer. Please restrict access to it via property ```allowed.administrator.ips```.
+
+### Turn off chrome https warning on localhost
+
+- Paste in chrome 
+
+        chrome://flags/#allow-insecure-localhost
+
+- You should see highlighted text saying: "Allow invalid certificates for resources loaded from localhost". Click enable.
         
 ## HTTP/S RESTful
 Blynk HTTP/S RESTful API allows to easily read and write values to/from Pins in Blynk apps and Hardware. 
@@ -409,7 +438,7 @@ You can also send SMS over email if your cell provider supports that. See [discu
 ## Enabling raw data storage
 By default raw data storage is disabled (as it consumes disk space a lot). 
 When you enable it, every ```Blynk.virtualWrite``` command will be saved to DB.
-You will need to install PostgreSQL Database to enable this functionality:
+You will need to install PostgreSQL Database (**minimum required version is 9.5**) to enable this functionality:
 
 #### 1. Enabling raw data on server
 
@@ -417,44 +446,47 @@ Enable raw data in ```server.properties``` :
 
         enable.raw.db.data.store=true
 
-#### 2. Add PostgreSQL Apt Repository (minimum version 9.5 is required)
+#### 2. Install PostgreSQL. Option A
 
         sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
         wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
-
-#### 3. Install PostgreSQL
-
+        
         sudo apt-get update
         sudo apt-get install postgresql postgresql-contrib
+        
+#### 2. Install PostgreSQL.  Option B 
 
-#### 4. Download Blynk DB script
+        sudo apt-get update
+        apt-get --no-install-recommends install postgresql-9.6 postgresql-contrib-9.6
+
+#### 3. Download Blynk DB script
 
         wget https://raw.githubusercontent.com/blynkkk/blynk-server/master/server/core/src/main/resources/create_schema.sql
 
-#### 5. Get full path of downloaded file 
+#### 4. Move create_schema.sql to temp folder (to avoid permission problems)
 
-        readlink -f create_schema.sql
+        mv create_schema.sql /tmp
         
 Result:  
 
-        /root/create_schema.sql
+        /tmp/create_schema.sql
         
 Copy it to clipboard from your console.
 
-#### 6. Connect to PostgreSQL
+#### 5. Connect to PostgreSQL
 
         sudo su - postgres
         psql
 
-#### 7. Create Blynk DB, test user and tables
+#### 6. Create Blynk DB, test user and tables
 
-        \i /root/create_schema.sql
+        \i /tmp/create_schema.sql
         
-```/root/create_schema.sql``` - is path from step 5.
+```/root/create_schema.sql``` - is path from step 4.
         
 You should see next output:
 
-        postgres=# \i /root/create_schema.sql
+        postgres=# \i /tmp/create_schema.sql
         CREATE DATABASE
         You are now connected to database "blynk" as user "postgres".
         CREATE TABLE
@@ -577,11 +609,35 @@ Blynk has a bunch of integration tests that require DB, so you have to skip test
 
         mvn clean install -Dmaven.test.skip=true
         
-### Minimal requirements
-Blynk server is very powerful it can handle 1000 devices on single raspberry PI.
+### How Blynk Works?
+When hardware connects to Blynk cloud it opens either keep-alive ssl/tls connection on port 8441 or keep-alive plain 
+tcp/ip connection on port 8442. Blynk app opens mutual ssl/tls connection to Blynk Cloud on port 8443. Blynk Cloud is 
+responsible for forwarding messages between hardware and app. In both (app and hardware) connections Blynk uses  
+own binary protocol described below.
 
-- Any OS that can run java
-- At least 30 MB of RAM (could be less with tuning)
+### Blynk protocol
+
+Blynk transfers binary messages with the following structure:
+
+| Command       | Message Id    | Length/Status   | Body     |
+|:-------------:|:-------------:|:---------------:|:--------:|
+| 1 byte        | 2 bytes       | 2 bytes         | Variable |
+
+Message Id and Length are [big endian](http://en.wikipedia.org/wiki/Endianness#Big-endian).
+Body has a command-specific format.
+
+Command and Status definitions: [BlynkProtocolDefs.h](https://github.com/blynkkk/blynk-library/blob/master/Blynk/BlynkProtocolDefs.h)
+
+Typical Blynk library knows how to send(S)/process(P):
+
+    S   BLYNK_CMD_LOGIN + auth token
+    SP  BLYNK_CMD_PING
+    SP  BLYNK_CMD_RESPONSE
+    SP  BLYNK_CMD_BRIDGE
+    SP  BLYNK_CMD_HARDWARE
+    S   BLYNK_CMD_TWEET
+    S   BLYNK_CMD_EMAIL
+    S   BLYNK_CMD_PUSH_NOTIFICATION
 
 ## Licensing
 [GNU GPL license](https://github.com/blynkkk/blynk-server/blob/master/license.txt)

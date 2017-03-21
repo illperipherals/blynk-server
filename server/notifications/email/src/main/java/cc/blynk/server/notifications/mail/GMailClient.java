@@ -3,13 +3,11 @@ package cc.blynk.server.notifications.mail;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.mail.*;
+import javax.mail.internet.*;
+import javax.mail.util.ByteArrayDataSource;
 import java.util.Properties;
 
 /**
@@ -39,7 +37,7 @@ public class GMailClient implements MailClient {
         try {
             this.from = new InternetAddress(username);
         } catch (AddressException e) {
-            throw new RuntimeException("Error initializing MailWrapper.");
+            throw new RuntimeException("Error initializing MailWrapper." + e.getMessage());
         }
     }
 
@@ -51,6 +49,36 @@ public class GMailClient implements MailClient {
     @Override
     public void sendHtml(String to, String subj, String body) throws Exception {
         send(to, subj, body, "text/html");
+    }
+
+    @Override
+    public void sendHtmlWithAttachment(String to, String subj, String body, QrHolder[] attachments) throws Exception {
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(from);
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject(subj, "UTF-8");
+
+        Multipart multipart = new MimeMultipart();
+
+        MimeBodyPart bodyMessagePart = new MimeBodyPart();
+        bodyMessagePart.setText(body);
+        bodyMessagePart.setContent(body, "text/html");
+
+        multipart.addBodyPart(bodyMessagePart);
+
+        for (QrHolder qrHolder : attachments) {
+            MimeBodyPart attachmentsPart = new MimeBodyPart();
+            DataSource source = new ByteArrayDataSource(qrHolder.data, "image/jpeg");
+            attachmentsPart.setDataHandler(new DataHandler(source));
+            attachmentsPart.setFileName(qrHolder.name);
+            multipart.addBodyPart(attachmentsPart);
+        }
+
+        message.setContent(multipart);
+
+        Transport.send(message);
+
+        log.trace("Mail to {} was sent. Subj : {}, body : {}", to, subj, body);
     }
 
     private void send(String to, String subj, String body, String contentType) throws Exception {

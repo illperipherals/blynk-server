@@ -1,78 +1,41 @@
 package cc.blynk.server.api.http.logic.business;
 
-import cc.blynk.core.http.Response;
+import cc.blynk.server.core.dao.SessionDao;
 import cc.blynk.server.core.model.auth.User;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.util.AttributeKey;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Set;
 
 /**
  * The Blynk Project.
  * Created by Dmitriy Dumanskiy.
  * Created on 13.05.16.
  */
+@ChannelHandler.Sharable
 public class AuthCookieHandler extends ChannelInboundHandlerAdapter {
 
-    public final static AttributeKey<User> userAttributeKey = AttributeKey.valueOf("user");
-    private static final Logger log = LogManager.getLogger(AuthCookieHandler.class);
-    private final String authPath;
-    private final SessionHolder sessionHolder;
+    private final SessionDao sessionDao;
 
-    public AuthCookieHandler(String authPath, SessionHolder sessionHolder) {
-        this.authPath = authPath;
-        this.sessionHolder = sessionHolder;
+    public AuthCookieHandler(SessionDao sessionDao) {
+        this.sessionDao = sessionDao;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
-            if (request.uri().startsWith(authPath)) {
-                User user = getUser(request);
+            User user = sessionDao.getUserFromCookie(request);
 
-                //access to API that requires cookies and no auth cookie
+            if (request.uri().equals("/admin/logout")) {
+                ctx.channel().attr(SessionDao.userAttributeKey).set(null);
+            } else {
                 if (user != null) {
-                    if (request.uri().equals("/business/logout")) {
-                        ctx.channel().attr(userAttributeKey).set(null);
-                    } else {
-                        ctx.channel().attr(userAttributeKey).set(user);
-                    }
-                } else {
-                    if (request.uri().endsWith("/login") || request.uri().startsWith("/static/business")) {
-                    } else {
-                        ctx.writeAndFlush(Response.redirect("/static/business/login.html"), ctx.voidPromise());
-                        return;
-                    }
+                    ctx.channel().attr(SessionDao.userAttributeKey).set(user);
                 }
             }
         }
-
         super.channelRead(ctx, msg);
-    }
-
-    private User getUser(FullHttpRequest request) {
-        String cookieString = request.headers().get(HttpHeaderNames.COOKIE);
-
-        if (cookieString != null) {
-            Set<Cookie> cookies = ServerCookieDecoder.STRICT.decode(cookieString);
-            if (!cookies.isEmpty()) {
-                for (Cookie cookie : cookies) {
-                    if (sessionHolder.isValid(cookie)) {
-                        return sessionHolder.getUser(cookie.value());
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 
 }

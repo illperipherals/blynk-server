@@ -3,8 +3,11 @@ package cc.blynk.server.application.handlers.main.logic.dashboard;
 import cc.blynk.server.application.handlers.main.auth.AppStateHolder;
 import cc.blynk.server.core.dao.TokenManager;
 import cc.blynk.server.core.model.DashBoard;
+import cc.blynk.server.core.model.Pin;
 import cc.blynk.server.core.model.auth.User;
 import cc.blynk.server.core.model.device.Device;
+import cc.blynk.server.core.model.widgets.MultiPinWidget;
+import cc.blynk.server.core.model.widgets.OnePinWidget;
 import cc.blynk.server.core.model.widgets.Widget;
 import cc.blynk.server.core.model.widgets.controls.Timer;
 import cc.blynk.server.core.model.widgets.others.eventor.Eventor;
@@ -15,6 +18,7 @@ import cc.blynk.server.core.protocol.model.messages.StringMessage;
 import cc.blynk.server.workers.timer.TimerWorker;
 import cc.blynk.utils.ArrayUtil;
 import cc.blynk.utils.JsonParser;
+import cc.blynk.utils.StringUtils;
 import cc.blynk.utils.TokenGeneratorUtil;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +49,14 @@ public class CreateDashLogic {
     }
 
     public void messageReceived(ChannelHandlerContext ctx, AppStateHolder state, StringMessage message) {
-        String dashString = message.body;
+        boolean generateTokensForDevices = true;
+        final String dashString;
+        if (message.body.startsWith("no_token")) {
+            generateTokensForDevices = false;
+            dashString = StringUtils.split2(message.body)[1];
+        } else {
+            dashString = message.body;
+        }
 
         if (dashString == null || dashString.isEmpty()) {
             throw new IllegalCommandException("Income create dash message is empty.");
@@ -84,8 +95,12 @@ public class CreateDashLogic {
             for (Device device : newDash.devices) {
                 //this case only possible for clone,
                 device.token = null;
-                String token = TokenGeneratorUtil.generateNewToken();
-                tokenManager.assignToken(user, newDash.id, device.id, token);
+                device.disconnectTime = 0;
+                device.lastLoggedIP = null;
+                if (generateTokensForDevices) {
+                    String token = TokenGeneratorUtil.generateNewToken();
+                    tokenManager.assignToken(user, newDash.id, device.id, token);
+                }
             }
         }
 
@@ -97,6 +112,18 @@ public class CreateDashLogic {
             }
             if (widget instanceof Eventor) {
                 timerWorker.add(state.userKey, (Eventor) widget, newDash.id);
+            }
+            if (!generateTokensForDevices) {
+                if (widget instanceof OnePinWidget) {
+                    ((OnePinWidget) widget).value = null;
+                }
+                if (widget instanceof MultiPinWidget) {
+                    for (Pin pin : ((MultiPinWidget) widget).pins) {
+                        if (pin != null) {
+                            pin.value = null;
+                        }
+                    }
+                }
             }
         }
 

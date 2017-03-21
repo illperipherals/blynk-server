@@ -1,38 +1,28 @@
-package cc.blynk.server.admin.http.logic.admin;
+package cc.blynk.server.admin.http.logic;
 
+import cc.blynk.core.http.CookiesBaseHttpHandler;
 import cc.blynk.core.http.MediaType;
 import cc.blynk.core.http.Response;
-import cc.blynk.core.http.annotation.Consumes;
-import cc.blynk.core.http.annotation.DELETE;
-import cc.blynk.core.http.annotation.GET;
-import cc.blynk.core.http.annotation.PUT;
-import cc.blynk.core.http.annotation.Path;
-import cc.blynk.core.http.annotation.PathParam;
-import cc.blynk.core.http.annotation.QueryParam;
+import cc.blynk.core.http.annotation.*;
 import cc.blynk.core.http.model.Filter;
 import cc.blynk.server.Holder;
-import cc.blynk.server.core.dao.FileManager;
-import cc.blynk.server.core.dao.SessionDao;
-import cc.blynk.server.core.dao.TokenManager;
-import cc.blynk.server.core.dao.TokenValue;
-import cc.blynk.server.core.dao.UserDao;
-import cc.blynk.server.core.dao.UserKey;
+import cc.blynk.server.core.dao.*;
 import cc.blynk.server.core.model.AppName;
 import cc.blynk.server.core.model.DashBoard;
 import cc.blynk.server.core.model.auth.Session;
 import cc.blynk.server.core.model.auth.User;
 import cc.blynk.server.core.model.device.Device;
-import cc.blynk.utils.HttpLogicUtil;
 import cc.blynk.utils.JsonParser;
 import cc.blynk.utils.SHA256Util;
+import io.netty.channel.ChannelHandler;
 
 import java.util.List;
 
-import static cc.blynk.core.http.Response.appendTotalCountHeader;
-import static cc.blynk.core.http.Response.badRequest;
-import static cc.blynk.core.http.Response.ok;
+import static cc.blynk.core.http.Response.*;
+import static cc.blynk.utils.AdminHttpUtil.sort;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
 
 /**
  * The Blynk Project.
@@ -40,26 +30,23 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * Created on 03.12.15.
  */
 @Path("/users")
-public class UsersLogic extends HttpLogicUtil {
+@ChannelHandler.Sharable
+public class UsersLogic extends CookiesBaseHttpHandler {
 
     private final UserDao userDao;
-    private final SessionDao sessionDao;
     private final FileManager fileManager;
-    private final TokenManager tokenManager;
 
-    public UsersLogic(Holder holder) {
+    public UsersLogic(Holder holder, String rootPath) {
+        super(holder, rootPath);
         this.userDao = holder.userDao;
         this.fileManager = holder.fileManager;
-        this.sessionDao = holder.sessionDao;
-        this.tokenManager = holder.tokenManager;
     }
 
     //for tests only
-    protected UsersLogic(UserDao userDao, SessionDao sessionDao, FileManager fileManager, TokenManager tokenManager) {
+    public UsersLogic(UserDao userDao, SessionDao sessionDao, FileManager fileManager, TokenManager tokenManager, String rootPath) {
+        super(tokenManager, sessionDao, null, rootPath);
         this.userDao = userDao;
         this.fileManager = fileManager;
-        this.sessionDao = sessionDao;
-        this.tokenManager = tokenManager;
     }
 
     @GET
@@ -86,7 +73,11 @@ public class UsersLogic extends HttpLogicUtil {
         String[] parts =  slitByLast(id);
         String name = parts[0];
         String appName = parts[1];
-        return ok(userDao.getByName(name, appName));
+        User user = userDao.getByName(name, appName);
+        if (user == null) {
+            return notFound();
+        }
+        return ok(user);
     }
 
     @GET
@@ -140,13 +131,13 @@ public class UsersLogic extends HttpLogicUtil {
 
         User oldUser = userDao.getByName(name, appName);
 
-        //if pass was changed, call hash function.
-        if (!updatedUser.pass.equals(oldUser.pass)) {
-            log.debug("Updating pass for {}.", updatedUser.name);
-            updatedUser.pass = SHA256Util.makeHash(updatedUser.pass, updatedUser.name);
+        //name was changed, but not password - do not allow this.
+        //as name is used as salt for pass generation
+        if (!updatedUser.name.equals(oldUser.name) && updatedUser.pass.equals(oldUser.pass)) {
+            return badRequest("You need also change password when changing username.");
         }
 
-        //user name was changed
+            //user name was changed
         if (!updatedUser.name.equals(oldUser.name)) {
             deleteUserByName(id);
             for (DashBoard dashBoard : oldUser.profile.dashBoards) {
@@ -154,6 +145,12 @@ public class UsersLogic extends HttpLogicUtil {
                     tokenManager.assignToken(updatedUser, dashBoard.id, device.id, device.token);
                 }
             }
+        }
+
+        //if pass was changed, call hash function.
+        if (!updatedUser.pass.equals(oldUser.pass)) {
+            log.debug("Updating pass for {}.", updatedUser.name);
+            updatedUser.pass = SHA256Util.makeHash(updatedUser.pass, updatedUser.name);
         }
 
         userDao.add(updatedUser);

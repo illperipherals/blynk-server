@@ -1,5 +1,6 @@
-package cc.blynk.server.admin.http.logic.admin;
+package cc.blynk.server.admin.http.logic;
 
+import cc.blynk.core.http.CookiesBaseHttpHandler;
 import cc.blynk.core.http.Response;
 import cc.blynk.core.http.annotation.GET;
 import cc.blynk.core.http.annotation.Path;
@@ -8,17 +9,15 @@ import cc.blynk.server.Holder;
 import cc.blynk.server.admin.http.response.IpNameResponse;
 import cc.blynk.server.admin.http.response.RequestPerSecondResponse;
 import cc.blynk.server.core.dao.FileManager;
-import cc.blynk.server.core.dao.SessionDao;
 import cc.blynk.server.core.dao.UserDao;
 import cc.blynk.server.core.dao.UserKey;
 import cc.blynk.server.core.model.DashBoard;
 import cc.blynk.server.core.model.auth.Session;
 import cc.blynk.server.core.model.auth.User;
 import cc.blynk.server.core.model.device.Device;
-import cc.blynk.server.core.stats.GlobalStats;
 import cc.blynk.server.core.stats.model.Stat;
-import cc.blynk.utils.HttpLogicUtil;
 import cc.blynk.utils.JsonParser;
+import io.netty.channel.ChannelHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static cc.blynk.core.http.Response.ok;
+import static cc.blynk.utils.AdminHttpUtil.*;
 
 /**
  * The Blynk Project.
@@ -33,24 +33,22 @@ import static cc.blynk.core.http.Response.ok;
  * Created on 09.12.15.
  */
 @Path("/stats")
-public class StatsLogic extends HttpLogicUtil {
+@ChannelHandler.Sharable
+public class StatsLogic extends CookiesBaseHttpHandler {
 
-    private final GlobalStats stats;
-    private final SessionDao sessionDao;
     private final UserDao userDao;
     private final FileManager fileManager;
 
-    public StatsLogic(Holder holder) {
+    public StatsLogic(Holder holder, String rootPath) {
+        super(holder, rootPath);
         this.userDao = holder.userDao;
-        this.sessionDao = holder.sessionDao;
-        this.stats = holder.stats;
         this.fileManager = holder.fileManager;
     }
 
     @GET
     @Path("/realtime")
     public Response getReatime() {
-       return ok(Collections.singletonList(new Stat(sessionDao, userDao, stats, false)));
+       return ok(Collections.singletonList(new Stat(sessionDao, userDao, globalStats, false)));
     }
 
     @GET
@@ -75,7 +73,7 @@ public class StatsLogic extends HttpLogicUtil {
     @Path("/messages")
     public Response getMessages(@QueryParam("_sortField") String sortField,
                                     @QueryParam("_sortDir") String sortOrder) {
-        return ok(sort(convertObjectToMap(new Stat(sessionDao, userDao, stats, false).commands), sortField, sortOrder));
+        return ok(sort(convertObjectToMap(new Stat(sessionDao, userDao, globalStats, false).commands), sortField, sortOrder));
     }
 
     @GET

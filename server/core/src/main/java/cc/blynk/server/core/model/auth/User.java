@@ -4,6 +4,7 @@ import cc.blynk.server.core.model.AppName;
 import cc.blynk.server.core.model.Profile;
 import cc.blynk.server.core.protocol.exceptions.EnergyLimitException;
 import cc.blynk.utils.JsonParser;
+import cc.blynk.utils.ParseUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.concurrent.ConcurrentMap;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class User {
 
-    private static final int INITIAL_ENERGY_AMOUNT = 2000;
+    private static final int INITIAL_ENERGY_AMOUNT = ParseUtil.parseInt(System.getProperty("initial.energy", "2000"));
 
     //todo remove after migration
     public ConcurrentMap<Integer, String> dashTokens;
@@ -36,6 +37,7 @@ public class User {
     public Profile profile;
 
     public boolean isFacebookUser;
+    public boolean isSuperAdmin;
 
     public volatile int energy;
 
@@ -50,13 +52,14 @@ public class User {
         this.appName = AppName.BLYNK;
     }
 
-    public User(String name, String pass, String appName, String region, boolean isFacebookUser) {
+    public User(String name, String pass, String appName, String region, boolean isFacebookUser, boolean isSuperAdmin) {
         this();
         this.name = name;
         this.pass = pass;
         this.appName = appName;
         this.region = region;
         this.isFacebookUser = isFacebookUser;
+        this.isSuperAdmin = isSuperAdmin;
     }
 
     @JsonProperty("id")
@@ -86,17 +89,20 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof User)) return false;
 
         User user = (User) o;
 
-		return !(name != null ? !name.equals(user.name) : user.name != null);
+        if (name != null ? !name.equals(user.name) : user.name != null) return false;
+        return !(appName != null ? !appName.equals(user.appName) : user.appName != null);
 
-	}
+    }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (appName != null ? appName.hashCode() : 0);
+        return result;
     }
 
     @Override

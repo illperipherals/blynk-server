@@ -1,13 +1,17 @@
-package cc.blynk.server.admin.http.logic.admin;
+package cc.blynk.server.admin.http.logic;
 
+import cc.blynk.core.http.CookiesBaseHttpHandler;
 import cc.blynk.core.http.Response;
 import cc.blynk.core.http.annotation.GET;
 import cc.blynk.core.http.annotation.Path;
 import cc.blynk.core.http.annotation.QueryParam;
+import cc.blynk.server.Holder;
 import cc.blynk.server.core.dao.UserDao;
-import cc.blynk.utils.HttpLogicUtil;
+import io.netty.channel.ChannelHandler;
 
 import static cc.blynk.core.http.Response.ok;
+import static cc.blynk.utils.AdminHttpUtil.convertMapToPair;
+import static cc.blynk.utils.AdminHttpUtil.sort;
 
 /**
  * The Blynk Project.
@@ -15,12 +19,14 @@ import static cc.blynk.core.http.Response.ok;
  * Created on 09.12.15.
  */
 @Path("/hardwareInfo")
-public class HardwareStatsLogic extends HttpLogicUtil {
+@ChannelHandler.Sharable
+public class HardwareStatsLogic extends CookiesBaseHttpHandler {
 
     private final UserDao userDao;
 
-    public HardwareStatsLogic(UserDao userDao) {
-        this.userDao = userDao;
+    public HardwareStatsLogic(Holder holder, String rootPath) {
+        super(holder, rootPath);
+        this.userDao = holder.userDao;
     }
 
     @GET

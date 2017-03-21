@@ -3,12 +3,13 @@ package cc.blynk.server.notifications.mail;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.activation.DataHandler;
 import javax.mail.Message;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import javax.mail.internet.*;
+import javax.mail.util.ByteArrayDataSource;
 import java.util.Properties;
 
 /**
@@ -18,7 +19,7 @@ import java.util.Properties;
  */
 public class SparkPostMailClient implements MailClient {
 
-    private static final Logger log = LogManager.getLogger(MailWrapper.class);
+    private static final Logger log = LogManager.getLogger(SparkPostMailClient.class);
 
     private final Session session;
     private final InternetAddress from;
@@ -58,6 +59,40 @@ public class SparkPostMailClient implements MailClient {
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject(subj, "UTF-8");
         message.setContent(body, contentType);
+
+        Transport transport = session.getTransport();
+        try {
+            transport.connect(host, username, password);
+            transport.sendMessage(message, message.getAllRecipients());
+        } finally {
+            transport.close();
+        }
+
+        log.trace("Mail to {} was sent. Subj : {}, body : {}", to, subj, body);
+    }
+
+    @Override
+    public void sendHtmlWithAttachment(String to, String subj, String body, QrHolder[] attachments) throws Exception {
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(from);
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject(subj, "UTF-8");
+
+        Multipart multipart = new MimeMultipart();
+
+        MimeBodyPart bodyMessagePart = new MimeBodyPart();
+        bodyMessagePart.setText(body);
+        bodyMessagePart.setContent(body, "text/html");
+        multipart.addBodyPart(bodyMessagePart);
+
+        for (QrHolder qrHolder : attachments) {
+            MimeBodyPart attachmentsPart = new MimeBodyPart();
+            attachmentsPart.setDataHandler(new DataHandler(new ByteArrayDataSource(qrHolder.data, "image/jpeg")));
+            attachmentsPart.setFileName(qrHolder.name);
+            multipart.addBodyPart(attachmentsPart);
+        }
+
+        message.setContent(multipart);
 
         Transport transport = session.getTransport();
         try {

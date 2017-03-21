@@ -1,16 +1,17 @@
 package cc.blynk.server.launcher;
 
 import cc.blynk.server.Holder;
-import cc.blynk.server.admin.http.HttpsAdminServer;
 import cc.blynk.server.api.http.HttpAPIServer;
 import cc.blynk.server.api.http.HttpsAPIServer;
 import cc.blynk.server.application.AppServer;
 import cc.blynk.server.core.BaseServer;
+import cc.blynk.server.core.model.AppName;
 import cc.blynk.server.hardware.HardwareSSLServer;
 import cc.blynk.server.hardware.HardwareServer;
 import cc.blynk.server.hardware.MQTTHardwareServer;
 import cc.blynk.utils.JarUtil;
 import cc.blynk.utils.LoggerUtil;
+import cc.blynk.utils.SHA256Util;
 import cc.blynk.utils.ServerProperties;
 import cc.blynk.utils.properties.GCMProperties;
 import cc.blynk.utils.properties.MailProperties;
@@ -42,6 +43,12 @@ import java.util.Map;
  */
 public class ServerLauncher {
 
+    //required for QR generation
+    static {
+        System.setProperty("java.awt.headless", "true");
+        System.out.println("Is headless : " + java.awt.GraphicsEnvironment.isHeadless());
+    }
+
     public static void main(String[] args) throws Exception {
         Map<String, String> cmdProperties = ArgumentsParser.parse(args);
 
@@ -53,6 +60,7 @@ public class ServerLauncher {
         System.setProperty("data.folder", serverProperties.getProperty("data.folder"));
         //required to avoid dependencies within model to server.properties
         System.setProperty("terminal.strings.pool.size", serverProperties.getProperty("terminal.strings.pool.size", "25"));
+        System.setProperty("initial.energy", serverProperties.getProperty("initial.energy", "2000"));
 
         boolean isUnpacked = JarUtil.unpackStaticFiles("static");
 
@@ -73,8 +81,7 @@ public class ServerLauncher {
                 new HardwareSSLServer(holder),
                 new AppServer(holder),
                 new HttpAPIServer(holder),
-                new HttpsAPIServer(holder),
-                new HttpsAdminServer(holder, isUnpacked),
+                new HttpsAPIServer(holder, isUnpacked),
                 new MQTTHardwareServer(holder)
         };
 
@@ -86,6 +93,21 @@ public class ServerLauncher {
             System.out.println("Blynk Server " + JarUtil.getServerVersion() + " successfully started.");
             String path = new File(System.getProperty("logs.folder")).getAbsolutePath().replace("/./", "/");
             System.out.println("All server output is stored in folder '" + path + "' file.");
+
+            createSuperUser(holder);
+        }
+    }
+
+    private static void createSuperUser(Holder holder) {
+        String adminName = holder.props.getProperty("admin.email", "admin@blynk.cc");
+        String pass = holder.props.getProperty("admin.pass", "admin");
+
+        if (!holder.userDao.isSuperAdminExists()) {
+            System.out.println("Your Admin login name is " + adminName);
+            System.out.println("Your Admin password is " + pass);
+
+            String hash = SHA256Util.makeHash(pass, adminName);
+            holder.userDao.add(adminName, hash, AppName.BLYNK, true);
         }
     }
 

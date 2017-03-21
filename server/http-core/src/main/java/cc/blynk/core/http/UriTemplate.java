@@ -25,53 +25,40 @@ public class UriTemplate {
     // when a URL pattern contains a format parameter.
     private static final String URL_FORMAT_MATCH_REGEX = "(?:\\\\.\\([\\\\w%]+?\\))?";
 
-    // Finds the query string portion within a URL. Appended to the end of the built-up regex string.
+    // Finds the query string portion withi    private Matcher matcher;n a URL. Appended to the end of the built-up regex string.
     private static final String URL_QUERY_STRING_REGEX = "(?:\\?.*?)?$";
 
     private String urlPattern;
-
-    private Pattern compiledUrl;
-
     private Matcher matcher;
+    private Pattern compiledUrl;
 
     private final List<String> parameterNames = new ArrayList<>();
 
     public UriTemplate(String pattern) {
-        super();
-        setUrlPattern(pattern);
+        this.urlPattern = pattern;
         compile();
     }
 
-    private String getUrlPattern() {
-        return urlPattern;
-    }
-
-    private void setUrlPattern(String pattern)
-    {
-        this.urlPattern = pattern;
-    }
-
-    public boolean matches(String url) {
-        this.matcher = compiledUrl.matcher(url);
-        return matcher.matches();
+    public Matcher matcher(String url) {
+        return compiledUrl.matcher(url);
     }
 
     public void compile() {
         acquireParameterNames();
-        String parsedPattern = getUrlPattern().replaceFirst(URL_FORMAT_REGEX, URL_FORMAT_MATCH_REGEX);
+        String parsedPattern = urlPattern.replaceFirst(URL_FORMAT_REGEX, URL_FORMAT_MATCH_REGEX);
         parsedPattern = parsedPattern.replaceAll(URL_PARAM_REGEX, URL_PARAM_MATCH_REGEX);
         this.compiledUrl = Pattern.compile(parsedPattern + URL_QUERY_STRING_REGEX);
     }
 
     private void acquireParameterNames() {
-        Matcher m = URL_PARAM_PATTERN.matcher(getUrlPattern());
+        Matcher m = URL_PARAM_PATTERN.matcher(urlPattern);
 
         while (m.find()) {
             parameterNames.add(m.group(1));
         }
     }
 
-    public Map<String, String> extractParameters() {
+    public Map<String, String> extractParameters(Matcher matcher) {
         Map<String, String> values = new HashMap<>();
 
         for (int i = 0; i < matcher.groupCount(); i++) {
@@ -85,19 +72,4 @@ public class UriTemplate {
         return values;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        UriTemplate that = (UriTemplate) o;
-
-        return !(urlPattern != null ? !urlPattern.equals(that.urlPattern) : that.urlPattern != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        return urlPattern != null ? urlPattern.hashCode() : 0;
-    }
 }
